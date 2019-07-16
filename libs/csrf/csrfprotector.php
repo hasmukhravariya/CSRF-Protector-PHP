@@ -297,18 +297,13 @@ if (!defined('__CSRF_PROTECTOR__')) {
         private static function isValidToken($token) {
             if (!isset($_SESSION[self::$config['CSRFP_TOKEN']])) return false;
             if (!is_array($_SESSION[self::$config['CSRFP_TOKEN']])) return false;
-            foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $key => $value) {
-                if ($value == $token) {
-
-                    // Clear all older tokens assuming they have been consumed
-                    foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $_key => $_value) {
-                        if ($_value == $token) break;
-                        array_shift($_SESSION[self::$config['CSRFP_TOKEN']]);
-                    }
+            // Clear match token from the session
+            foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $_key => $_value) {
+                if ($_value == $token) {
+                    unset($_SESSION[self::$config['CSRFP_TOKEN']][$_key]);
                     return true;
                 }
             }
-
             return false;
         }
 
