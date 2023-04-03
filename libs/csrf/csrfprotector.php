@@ -8,6 +8,7 @@ if (!defined('__CSRF_PROTECTOR__')) {
 
     // name of HTTP POST variable for authentication
     define("CSRFP_TOKEN","csrfp_token");
+    define("CSRFP_TOKEN_EXPIRY","csrfp_token_expiry");
 
     // We insert token name and list of url patterns for which
     // GET requests are validated against CSRF as hidden input fields
@@ -158,6 +159,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
             if (self::$config['CSRFP_TOKEN'] == '')
                 self::$config['CSRFP_TOKEN'] = CSRFP_TOKEN;
 
+            if (self::$config['CSRFP_TOKEN_EXPIRY'] == '')
+                self::$config['CSRFP_TOKEN_EXPIRY'] = CSRFP_TOKEN_EXPIRY;
+
             self::$tokenHeaderKey = 'HTTP_' .strtoupper(self::$config['CSRFP_TOKEN']);
             self::$tokenHeaderKey = str_replace('-', '_', self::$tokenHeaderKey);
 
@@ -297,13 +301,18 @@ if (!defined('__CSRF_PROTECTOR__')) {
         private static function isValidToken($token) {
             if (!isset($_SESSION[self::$config['CSRFP_TOKEN']])) return false;
             if (!is_array($_SESSION[self::$config['CSRFP_TOKEN']])) return false;
-            // Clear match token from the session
-            foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $_key => $_value) {
-                if ($_value == $token) {
-                    unset($_SESSION[self::$config['CSRFP_TOKEN']][$_key]);
+            foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $key => $value) {
+                if ($value == $token) {
+
+                    // Clear all older tokens assuming they have been consumed
+                    foreach ($_SESSION[self::$config['CSRFP_TOKEN']] as $_key => $_value) {
+                        if ($_value == $token) break;
+                        array_shift($_SESSION[self::$config['CSRFP_TOKEN']]);
+                    }
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -393,10 +402,20 @@ if (!defined('__CSRF_PROTECTOR__')) {
                 self::$cookieConfig = new csrfpCookieConfig(self::$config['cookieConfig']);
             }
 
+            $expiryTime = time() + self::$cookieConfig->expire;
+
             setcookie(
                 self::$config['CSRFP_TOKEN'], 
                 $token,
-                time() + self::$cookieConfig->expire,
+                $expiryTime,
+                self::$cookieConfig->path,
+                self::$cookieConfig->domain,
+                (bool) self::$cookieConfig->secure);
+
+            setcookie(
+                self::$config['CSRFP_TOKEN_EXPIRY'],
+                $expiryTime,
+                $expiryTime,
                 self::$cookieConfig->path,
                 self::$cookieConfig->domain,
                 (bool) self::$cookieConfig->secure);
