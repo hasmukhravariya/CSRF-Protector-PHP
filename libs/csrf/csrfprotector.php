@@ -162,6 +162,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
             if (self::$config['CSRFP_TOKEN_EXPIRY'] == '')
                 self::$config['CSRFP_TOKEN_EXPIRY'] = CSRFP_TOKEN_EXPIRY;
 
+            if (!isset(self::$config['redactSensitiveInfo']))
+                self::$config['redactSensitiveInfo'] = array();
+
             self::$tokenHeaderKey = 'HTTP_' .strtoupper(self::$config['CSRFP_TOKEN']);
             self::$tokenHeaderKey = str_replace('-', '_', self::$tokenHeaderKey);
 
@@ -522,6 +525,30 @@ if (!defined('__CSRF_PROTECTOR__')) {
             return $buffer;
         }
 
+        protected static function isAssociativeArray($arr) {
+            return array_values($arr) !== $arr;
+        }
+
+        protected static function redactSensitiveInfo(&$data, $keys) {
+            foreach ($data as $key => &$value) {
+                if (is_array($value)) {
+                    if (self::isAssociativeArray($value)) {
+                        self::redactSensitiveInfo($value, $keys);
+                    } else {
+                        foreach ($value as &$v) {
+                            if (in_array($key, $keys)) {
+                                $v = 'REDACTED';
+                            }
+                        }
+                    }
+                } else {
+                    if (in_array($key, $keys)) {
+                        $value = 'REDACTED';
+                    }
+                }
+            }
+        }
+
         /*
          * Function: logCSRFattack
          * Function to log CSRF Attack
@@ -542,7 +569,14 @@ if (!defined('__CSRF_PROTECTOR__')) {
             $context['HOST'] = $_SERVER['HTTP_HOST'];
             $context['REQUEST_URI'] = $_SERVER['REQUEST_URI'];
             $context['requestType'] = self::$requestType;
-            $context['cookie'] = $_COOKIE;
+
+            $redactedCookie = $_COOKIE;
+            self::redactSensitiveInfo($redactedCookie, self::$config['redactSensitiveInfo']);
+            $context['cookie'] = $redactedCookie;
+
+            $redactedSession = $_SESSION;
+            self::redactSensitiveInfo($redactedSession, self::$config['redactSensitiveInfo']);
+            $context['session'] = $redactedSession;
 
             self::$logger->log("OWASP CSRF PROTECTOR VALIDATION FAILURE", $context);
         }

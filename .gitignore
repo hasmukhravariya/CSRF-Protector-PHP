@@ -5,3 +5,6 @@ coverage/
 vendor/
 build/
 log/*.log
+
+phpunit
+composer.lock

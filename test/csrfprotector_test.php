@@ -98,6 +98,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
         csrfprotector::$config['CSRFP_TOKEN'] = 'csrfp_token';
         csrfprotector::$config['CSRFP_TOKEN_EXPIRY'] = 'csrfp_token_expiry';
+        csrfprotector::$config['redactSensitiveInfo'] = array();
         csrfprotector::$config['cookieConfig'] = array('secure' => false);
         csrfprotector::$config['logDirectory'] = '../test/logs';
 
@@ -734,7 +735,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         $_SERVER['REQUEST_METHOD'] = 'GET';
         csrfProtector::init();
 
-        $this->assertTrue(count(csrfProtector::$config) == 11);
+        $this->assertTrue(count(csrfProtector::$config) == 12);
         try {
             csrfProtector::init();
             $this->fail("alreadyInitializedException not raised");
