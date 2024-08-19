@@ -1,0 +1,22 @@
+---
+services:
+  # unit_tests_74:
+  #   build:
+  #     context: .
+  #     dockerfile: php74.tests.Dockerfile
+  #     secrets:
+  #       - composer_auth
+  #   hostname: owsrequest_tests74
+  #   environment:
+  #     - Environment=testing
+  #   volumes:
+  #     - ./build:/var/app/build
+  unit_tests_82:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    hostname: owsrequest_tests82
+    environment:
+      - Environment=testing
+    volumes:
+      - ./build:/var/app/build
