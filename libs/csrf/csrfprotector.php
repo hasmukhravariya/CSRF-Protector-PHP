@@ -98,7 +98,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * 
          * @var bool
          */
-        private static $useMemcache = false;
+        protected static $useMemcache = false;
+
+        protected static $memcacheHost = '';
 
         /**
          * Prefix to be used for session keys when storing data in Memcache.
@@ -106,15 +108,7 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * 
          * @var string
          */
-        private static $sessionKeyPrefix = "memc.sess.key.";
-
-        /**
-         * Instance of the Memcache connection.
-         * This property holds the Memcache object used for interacting with the Memcache server.
-         * 
-         * @var Memcache
-         */
-        private static $memcache;
+        protected static $sessionKeyPrefix = "memc.sess.key.";
 
         /**
          * Expiry time for Memcache tokens, specified in seconds.
@@ -122,7 +116,15 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * 
          * @var int
          */
-        private static $memcacheExpiry = 7200;
+        protected static $memcacheExpiry = 7200;
+
+        /**
+         * Instance of the Memcache connection.
+         * This property holds the Memcache object used for interacting with the Memcache server.
+         * 
+         * @var Memcache
+         */
+        protected static $memcache;
 
         /**
          * Array to hold tokens retrieved either from Memcache or the session.
@@ -130,7 +132,7 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * 
          * @var array
          */
-        private static $tokens = [];
+        protected static $tokens = [];
         
         /*
          *    Function: init
@@ -209,8 +211,20 @@ if (!defined('__CSRF_PROTECTOR__')) {
                 self::$config['redactSensitiveInfo'] = array();
             }
 
-            if (isset(self::$config['useMemcache'])) {
+            if (!empty(self::$config['useMemcache'])) {
                 self::$useMemcache = self::$config['useMemcache'];
+            }
+
+            if (!empty(self::$config['memcacheHost'])) {
+                self::$memcacheHost = self::$config['memcacheHost'];
+            }
+
+            if (!empty(self::$config['sessionKeyPrefix'])) {
+                self::$sessionKeyPrefix = self::$config['sessionKeyPrefix'];
+            }
+
+            if (!empty(self::$config['memcacheExpiry'])) {
+                self::$memcacheExpiry = self::$config['memcacheExpiry'];
             }
 
             self::$tokenHeaderKey = 'HTTP_' .strtoupper(self::$config['CSRFP_TOKEN']);
@@ -244,15 +258,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
                 self::$logger = new csrfpDefaultLogger(self::$config['logDirectory']);
             }
 
-            if (self::$useMemcache) {
+            if (self::$useMemcache && !empty(self::$memcacheHost)) {
                 self::$memcache = new Memcached();
-                $memcacheHost = ini_get('session.save_path');
-                self::$memcache->addServer($memcacheHost, 11211);
-
-                // Set session key prefix from PHP ini or config if available
-                if (ini_get('memcached.sess_prefix')) {
-                    self::$sessionKeyPrefix = ini_get('memcached.sess_prefix');
-                }
+                self::$memcache->addServer(self::$memcacheHost, 11211);
             }
 
             self::$tokens = self::retrieveTokens();
@@ -288,9 +296,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * Throws: 
          * void
          */
-        private static function retrieveTokens()
+        protected static function retrieveTokens()
         {
-            if (self::$useMemcache) {
+            if (self::$memcache) {
                 $sessionId = session_id();
                 $tokenKey = self::getTokenKey($sessionId);
                 return self::$memcache->get($tokenKey) ?: [];
@@ -312,9 +320,9 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * Throws: 
          * void
          */
-        private static function storeTokens()
+        protected static function storeTokens()
         {
-            if (self::$useMemcache) {
+            if (self::$memcache) {
                 $sessionId = session_id();
                 $tokenKey = self::getTokenKey($sessionId);
                 self::$memcache->set($tokenKey, self::$tokens, self::$memcacheExpiry);
@@ -336,7 +344,7 @@ if (!defined('__CSRF_PROTECTOR__')) {
          * Throws: 
          * void
          */
-        private static function getTokenKey($sessionId)
+        protected static function getTokenKey($sessionId)
         {
             return self::$sessionKeyPrefix . $sessionId . ".csrf_tokens";
         }

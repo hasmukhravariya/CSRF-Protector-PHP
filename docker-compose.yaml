@@ -17,6 +17,3 @@ services:
       - Environment=testing
     volumes:
       - ./build:/var/app/build
-      - ./test:/var/app/test
-      - ./libs:/var/app/libs
-

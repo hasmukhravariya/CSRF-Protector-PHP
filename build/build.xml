@@ -39,6 +39,7 @@
 
     <target name="phpunit" description="Run unit tests with PHPUnit">
         <exec executable="${execdir}/phpunit" dir="${unittestsdir}" failonerror="true">
+            <arg value="--stderr"/>
             <arg value="--coverage-html"/>
             <arg value="${coverage_dir}/"/>
             <arg value="--coverage-clover"/>

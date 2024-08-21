@@ -36,7 +36,7 @@ class csrfp_test_customLogger extends \PHPUnit\Framework\TestCase
           = $_GET[csrfprotector::$config['CSRFP_TOKEN']] = '123';
 
         //token mismatch - leading to failed validation
-        $_SESSION[csrfprotector::$config['CSRFP_TOKEN']] = array('abc');
+        csrfp_wrapper::updateTokens(array('abc'));
         $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
         $_SERVER['HTTPS'] = null;
 

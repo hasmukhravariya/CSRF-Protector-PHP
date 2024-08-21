@@ -7,7 +7,7 @@
   </coverage>
   <php>
     <ini name="memory_limit" value="1024M"/>
-    <ini name="error_reporting" value="E_ALL &amp; ~E_WARNING"/>
+    <ini name="error_reporting" value="E_ALL"/>
   </php>
   <testsuite name="OWASP CSRF Protector php">
     <directory>./csrfprotector_test.php</directory>
