@@ -736,7 +736,6 @@ class csrfp_test extends \PHPUnit\Framework\TestCase
     {
         putenv('mod_csrfp_enabled=true');
         $_COOKIE[csrfprotector::$config['CSRFP_TOKEN']] = 'abc';
-        // $_SESSION[csrfprotector::$config['CSRFP_TOKEN']] = array('abc');
         csrfp_wrapper::updateTokens(array('abc'));
 
         csrfProtector::$config = array();
