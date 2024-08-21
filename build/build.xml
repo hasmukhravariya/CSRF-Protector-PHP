@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Orchard CSRF-PROTECTOR-PHP Library" default="lint_test">
+    <target name="lint_test" depends="prepare,lint,phpcs,phpunit"/>
+    <property name="exclusionlist" value="${basedir}/../vendor"/>
+    <property name="sourcedir" value="${basedir}/../libs"/>
+    <property name="unittestsdir" value="${basedir}/../test"/>
+    <property name="execdir" value="${basedir}/../vendor/bin"/>
+    <property environment="env"/>
+    <property name="env" value="${env.PHP_ENV}"/>
+    <property name="logs_dir" value="${basedir}/logs/${env}"/>
+    <property name="coverage_dir" value="${basedir}/coverage/${env}"/>
+
+    <target name="clean" description="Cleanup build artifacts">
+        <delete dir="${coverage_dir}"/>
+        <delete dir="${logs_dir}"/>
+    </target>
+
+    <target name="prepare" depends="clean" description="Prepare for build">
+        <mkdir dir="${coverage_dir}"/>
+        <mkdir dir="${logs_dir}"/>
+    </target>
+
+    <target name="get-php-bin" description="Find out where php binary is">
+        <exec executable="/usr/bin/which" outputProperty="php-bin">
+            <arg value="php"/>
+        </exec>
+    </target>
+
+    <target name="lint" depends="get-php-bin">
+        <apply executable="${php-bin}" failonerror="true">
+            <arg value="-l"/>
+
+            <fileset dir="${basedir}/../">
+                <include name="**/*.php"/>
+                <exclude name="vendor/**"/>
+            </fileset>
+        </apply>
+    </target>
+
+    <target name="phpunit" description="Run unit tests with PHPUnit">
+        <exec executable="${execdir}/phpunit" dir="${unittestsdir}" failonerror="true">
+            <arg value="--coverage-html"/>
+            <arg value="${coverage_dir}/"/>
+            <arg value="--coverage-clover"/>
+            <arg value="${logs_dir}/phpunit.coverage.xml"/>
+            <arg value="--log-junit"/>
+            <arg value="${logs_dir}/phpunit.xml"/>
+        </exec>
+    </target>
+
+    <target name="phpcs" description="Find coding standard violations using PHP_CodeSniffer">
+        <exec executable="${execdir}/phpcs">
+            <arg value="--extensions=php"/>
+            <arg value="-p"/>
+            <arg value="--report=checkstyle"/>
+            <arg value="--report-file=${logs_dir}/checkstyle.xml"/>
+            <arg value="--standard=PSR2"/>
+            <arg value="--ignore=${exclusionlist}"/>
+            <arg path="${sourcedir}"/>
+            <arg path="${unittestsdir}"/>
+        </exec>
+    </target>
+</project>

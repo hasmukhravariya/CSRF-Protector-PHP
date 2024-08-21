@@ -77,7 +77,7 @@ class Helper {
 /**
  * main test class
  */
-class csrfp_test extends PHPUnit_Framework_TestCase
+class csrfp_test extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var array to hold current configurations
@@ -92,7 +92,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
     /**
      * Function to be run before every test*() functions.
      */
-    public function setUp()
+    public function setUp(): void
     {
         $this->logDir = __DIR__ .'/logs';
 
@@ -121,16 +121,19 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         file_put_contents(__DIR__ .'/../libs/config.php', $data);
 
         if (!defined('__CSRFP_UNIT_TEST__')) define('__CSRFP_UNIT_TEST__', true);
+        // ob_start();
     }
 
     /**
      * tearDown()
      */
-    public function tearDown()
+    public function tearDown(): void
     {
         unlink(__DIR__ .'/../libs/config.php');
         if (is_dir(__DIR__ .'/logs'))
             Helper::delTree(__DIR__ .'/logs');
+    
+        // ob_end_clean();
     }
 
     /**
@@ -212,7 +215,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         // change value to true
         $property->setValue($csrfp, new csrfpCookieConfig(array('secure' => true)));
         csrfprotector::refreshToken();
-        $this->assertRegExp('/; secure/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
+        $this->assertMatchesRegularExpression('/; secure/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
     }
 
     /**
@@ -235,9 +238,9 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         $property->setValue($csrfp, new csrfpCookieConfig(array('expire' => 600)));
         csrfprotector::refreshToken();
         // Check the expire date to the nearest minute in case the seconds does not match during test execution
-        $this->assertRegExp('/; expires=' . date('D, d-M-Y H:i', time() + 600) . ':\d\d GMT;?/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
+        $this->assertMatchesRegularExpression('/; expires=' . date('D, d-M-Y H:i', time() + 600) . ':\d\d GMT;?/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
         if(version_compare(phpversion(), '5.5', '>=')) {
-            $this->assertRegExp('/; Max-Age=600/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
+            $this->assertMatchesRegularExpression('/; Max-Age=600/', csrfp_wrapper::getHeaderValue('Set-Cookie'));
         }
     }
 
@@ -457,12 +460,12 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
         $this->assertFalse($token1 == $token2);
         $this->assertEquals(20, strlen($token1));
-        $this->assertRegExp('/^[a-z0-9]{20}$/', $token1);
+        $this->assertMatchesRegularExpression('/^[a-z0-9]{20}$/', $token1);
 
         csrfprotector::$config['tokenLength'] = 128;
         $token = csrfprotector::generateAuthToken();
         $this->assertEquals(128, strlen($token));
-        $this->assertRegExp('/^[a-z0-9]{128}$/', $token);
+        $this->assertMatchesRegularExpression('/^[a-z0-9]{128}$/', $token);
     }
 
     /**
@@ -488,10 +491,10 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
         //Check if file has been modified
         $this->assertNotEquals($inpLength, $outLength);
-        $this->assertContains('<noscript>', $modifiedHTML);
-        $this->assertContains('<input type="hidden" id="' . CSRFP_FIELD_TOKEN_NAME . '"', $modifiedHTML);
-        $this->assertContains('<input type="hidden" id="' . CSRFP_FIELD_URLS . '"', $modifiedHTML);
-        $this->assertContains('<script', $modifiedHTML);
+        $this->assertStringContainsString('<noscript>', $modifiedHTML);
+        $this->assertStringContainsString('<input type="hidden" id="' . CSRFP_FIELD_TOKEN_NAME . '"', $modifiedHTML);
+        $this->assertStringContainsString('<input type="hidden" id="' . CSRFP_FIELD_URLS . '"', $modifiedHTML);
+        $this->assertStringContainsString('<script', $modifiedHTML);
     }
 
     /**
@@ -536,7 +539,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         $modifiedHTML = csrfprotector::ob_handler($testHTML, 0);
 
         $this->assertEquals(strpos($modifiedHTML, '<body') + 23, strpos($modifiedHTML, '<noscript'));
-        $this->assertContains('</script>' . PHP_EOL . '</body>', $modifiedHTML);
+        $this->assertStringContainsString('</script>' . PHP_EOL . '</body>', $modifiedHTML);
     }
 
     /**
@@ -558,11 +561,11 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
         $modifiedHTML = csrfprotector::ob_handler($testHTML, 0);
 
-        $this->assertContains('<input type="hidden" id="' . CSRFP_FIELD_TOKEN_NAME . '"', $modifiedHTML);
-        $this->assertContains('<input type="hidden" id="' . CSRFP_FIELD_URLS . '"', $modifiedHTML);
+        $this->assertStringContainsString('<input type="hidden" id="' . CSRFP_FIELD_TOKEN_NAME . '"', $modifiedHTML);
+        $this->assertStringContainsString('<input type="hidden" id="' . CSRFP_FIELD_URLS . '"', $modifiedHTML);
 
-        $this->assertContains('<noscript', $modifiedHTML);
-        $this->assertNotContains('</script>' . PHP_EOL . '</body>', $modifiedHTML);
+        $this->assertStringContainsString('<noscript', $modifiedHTML);
+        $this->assertStringNotContainsString('</script>' . PHP_EOL . '</body>', $modifiedHTML);
     }
 
     /**
@@ -593,16 +596,15 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
     /**
      * test log CSRF attack -> log directory exception
-     * @expectedException logDirectoryNotFoundException
      */
     public function testlogCSRFattack_logDirException()
     {
+        $this->expectException('logDirectoryNotFoundException');
         new csrfpDefaultLogger('unknown_location');
     }
 
     /**
-     * test log CSRF attack -> log file write error
-     * @expectedException logFileWriteError
+     * test log CSRF attack -> log file write error 
      */
     public function testlogCSRFattack_logFileError()
     {
@@ -610,6 +612,7 @@ class csrfp_test extends PHPUnit_Framework_TestCase
         // fopen to return FALSE
         $errorReportingLevel = error_reporting(E_ERROR);
 
+        $this->expectException('logFileWriteError');
         $logFilename = $this->logDir . "/" . date("m-20y") . ".log";
         if (!is_dir($logFilename)) mkdir($logFilename, 0777, true);
 
@@ -749,11 +752,12 @@ class csrfp_test extends PHPUnit_Framework_TestCase
 
     /**
      * Test for exception thrown when init() method is called with missing config items
-     * @expectedException incompleteConfigurationException
-     * @expectedExceptionMessage OWASP CSRFProtector: Incomplete configuration file: missing logDirectory, failedAuthAction, jsUrl, tokenLength value(s)
      */
     public function testInit_incompleteConfigurationException()
     {
+        $this->expectException('incompleteConfigurationException');
+        $this->expectExceptionMessage('OWASP CSRFProtector: Incomplete configuration file: missing logDirectory, failedAuthAction, jsUrl, tokenLength value(s)');
+
         // Create an instance of config file -- for testing
         $data = file_get_contents(__DIR__ .'/config.testInit_incompleteConfigurationException.php');
         file_put_contents(__DIR__ .'/../libs/config.php', $data);

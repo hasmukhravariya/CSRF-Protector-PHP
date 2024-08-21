@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" verbose="true" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+      <file>../libs/csrf/csrfprotector.php</file>
+    </include>
+  </coverage>
+  <php>
+    <ini name="memory_limit" value="1024M"/>
+    <ini name="error_reporting" value="E_ALL &amp; ~E_WARNING"/>
+  </php>
+  <testsuite name="OWASP CSRF Protector php">
+    <directory>./csrfprotector_test.php</directory>
+    <directory>./csrfprotector_test_customlogger.php</directory>
+  </testsuite>
+</phpunit>

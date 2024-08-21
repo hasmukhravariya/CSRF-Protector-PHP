@@ -92,11 +92,42 @@ if (!defined('__CSRF_PROTECTOR__')) {
          */
         public static $requiredConfigurations  = array('logDirectory', 'failedAuthAction', 'jsUrl', 'tokenLength');
 
+        /**
+         * Indicates whether to use Memcache for CSRF Tokens.
+         * If set to `false`, Tokens will be fetched from session instead of Memcache.
+         * 
+         * @var bool
+         */
         private static $useMemcache = false;
+
+        /**
+         * Prefix to be used for session keys when storing data in Memcache.
+         * This prefix helps in uniquely identifying session keys within Memcache.
+         * 
+         * @var string
+         */
         private static $sessionKeyPrefix = "memc.sess.key.";
+
+        /**
+         * Instance of the Memcache connection.
+         * This property holds the Memcache object used for interacting with the Memcache server.
+         * 
+         * @var Memcache
+         */
         private static $memcache;
-         /**
-         * Variable to hold tokens retrieved from Memcache or Session
+
+        /**
+         * Expiry time for Memcache tokens, specified in seconds.
+         * Tokens stored in Memcache will expire after this duration (default is 2 hours).
+         * 
+         * @var int
+         */
+        private static $memcacheExpiry = 7200;
+
+        /**
+         * Array to hold tokens retrieved either from Memcache or the session.
+         * This array serves as a local cache of tokens to minimize repeated lookups.
+         * 
          * @var array
          */
         private static $tokens = [];
@@ -244,6 +275,19 @@ if (!defined('__CSRF_PROTECTOR__')) {
             self::storeTokens();
         }
 
+        /*
+         * Function: retrieveTokens
+         * Method to retrieve tokens from either Memcache or the session.
+         *
+         * Parameters: 
+         * void
+         *
+         * Returns: 
+         * array - The array of tokens retrieved from Memcache or the session.
+         *
+         * Throws: 
+         * void
+         */
         private static function retrieveTokens()
         {
             if (self::$useMemcache) {
@@ -255,18 +299,43 @@ if (!defined('__CSRF_PROTECTOR__')) {
             return $_SESSION[self::$config['CSRFP_TOKEN']] ?? [];
         }
 
+        /*
+         * Function: storeTokens
+         * Method to store tokens either in Memcache or in the session.
+         *
+         * Parameters: 
+         * void
+         *
+         * Returns: 
+         * void
+         *
+         * Throws: 
+         * void
+         */
         private static function storeTokens()
         {
-            self::$logger->log("Tokens at storeTokens: " . json_encode(self::$tokens));
             if (self::$useMemcache) {
                 $sessionId = session_id();
                 $tokenKey = self::getTokenKey($sessionId);
-                self::$memcache->set($tokenKey, self::$tokens);
+                self::$memcache->set($tokenKey, self::$tokens, self::$memcacheExpiry);
             } else {
                 $_SESSION[self::$config['CSRFP_TOKEN']] = self::$tokens;
             }
         }
 
+        /*
+         * Function: getTokenKey
+         * Method to generate the Memcache key for storing or retrieving CSRF tokens.
+         *
+         * Parameters: 
+         * $sessionId (string) - The session ID used to generate the unique key.
+         *
+         * Returns: 
+         * string - The generated key for storing or retrieving CSRF tokens in Memcache.
+         *
+         * Throws: 
+         * void
+         */
         private static function getTokenKey($sessionId)
         {
             return self::$sessionKeyPrefix . $sessionId . ".csrf_tokens";

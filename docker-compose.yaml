@@ -1,22 +1,22 @@
----
 services:
-  # unit_tests_74:
-  #   build:
-  #     context: .
-  #     dockerfile: php74.tests.Dockerfile
-  #     secrets:
-  #       - composer_auth
-  #   hostname: owsrequest_tests74
-  #   environment:
-  #     - Environment=testing
-  #   volumes:
-  #     - ./build:/var/app/build
-  unit_tests_82:
+  unit_tests_74:
     build:
       context: .
-      dockerfile: Dockerfile
-    hostname: owsrequest_tests82
+      dockerfile: php74.tests.Dockerfile
+    hostname: csrf_protector_library_tests74
     environment:
       - Environment=testing
     volumes:
       - ./build:/var/app/build
+  unit_tests_82:
+    build:
+      context: .
+      dockerfile: php82.tests.Dockerfile
+    hostname: csrf_protector_library_tests82
+    environment:
+      - Environment=testing
+    volumes:
+      - ./build:/var/app/build
+      - ./test:/var/app/test
+      - ./libs:/var/app/libs
+

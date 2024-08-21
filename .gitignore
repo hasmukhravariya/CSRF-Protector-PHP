@@ -3,7 +3,8 @@ coveralls.phar
 
 coverage/
 vendor/
-build/
+build/*
+!build/build.xml
 log/*.log
 
 phpunit
